@@ -1,0 +1,61 @@
+package com.example.spinnerandroid
+
+import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
+import android.widget.AdapterView.OnItemSelectedListener
+import android.widget.ArrayAdapter
+import android.widget.Toast
+import android.widget.Toast.LENGTH_SHORT
+import androidx.appcompat.app.AppCompatActivity
+import com.androidnetworking.AndroidNetworking
+import com.androidnetworking.common.Priority
+import com.androidnetworking.error.ANError
+import com.androidnetworking.interfaces.JSONObjectRequestListener
+import kotlinx.android.synthetic.main.activity_main.*
+import org.json.JSONArray
+import org.json.JSONObject
+
+
+class MainActivity : AppCompatActivity() {
+
+    var list: MutableList<Wilayah> = ArrayList()
+    var listString: MutableList<String> = ArrayList()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+        AndroidNetworking.initialize(applicationContext);
+
+        AndroidNetworking.get("https://x.rajaapi.com/MeP7c5nePYFn8l9Gz8fSA0pyALzoUs0PUetFMURu8Tec2Ml6RFtSC0f8D3/m/wilayah/provinsi")
+            .setPriority(Priority.LOW)
+            .build()
+            .getAsJSONObject(object : JSONObjectRequestListener {
+                override fun onResponse(response: JSONObject) {
+                    if(response.getBoolean("success").equals(true)){
+                        val jarray:JSONArray = response.getJSONArray("data")
+                        for (i in 0 until jarray.length()){
+                            var obj:JSONObject = jarray.getJSONObject(i)
+                            list.add(Wilayah(obj.getInt("id"), obj.getString("name")))
+                        }
+
+                        val adapter: ArrayAdapter<Wilayah> = ArrayAdapter(applicationContext, android.R.layout.simple_spinner_dropdown_item, list)
+                        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+                        spinner.setAdapter(adapter)
+                    }
+                }
+
+                override fun onError(error: ANError) {
+                    println("aoksokasodsok $error")
+                }
+            })
+
+        spinner.onItemSelectedListener = object : OnItemSelectedListener {
+            override fun onItemSelected( parent: AdapterView<*>, view: View?, position: Int, id: Long) {
+                val wilayah: Wilayah = parent.selectedItem as Wilayah
+                Toast.makeText(this@MainActivity, "haloo ${wilayah.id}", LENGTH_SHORT).show()
+            }
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+    }
+}
